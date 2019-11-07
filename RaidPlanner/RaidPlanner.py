@@ -38,9 +38,13 @@ async def parse_create(channel, author, args):
         return
 
     #parse date and time
-    date = parsingutil.parse_date(args[1])
-    time = parsingutil.parse_time(args[2])
-    date = date.replace(hour=time.hour, minute=time.minute, second=time.second)
+    try:
+        date = parsingutil.parse_date(args[1])
+        time = parsingutil.parse_time(args[2])
+        date = date.replace(hour=time.hour, minute=time.minute, second=time.second)
+    except ValueError:
+        await channel.send("Invalid date or time. Please enter valid values.")
+        return
 
     if len(args) > 3:
         name = ' '.join(args[3:])
@@ -53,9 +57,9 @@ async def parse_create(channel, author, args):
 
     title = author.display_name + "'s " + name + " " + str(type)
     if type == activity.activityType.raid:
-        newActivity = activity.createRaid(title, date)    
+        newActivity = activity.createRaid(title, date, author)    
     elif type == activity.activityType.nightfall:
-        newActivity = activity.createNightfall(title, date)
+        newActivity = activity.createNightfall(title, date, author)
     else:
         await channel.send("Unknown activity type. Please check the syntax with the '!help create' command.")
     
@@ -75,7 +79,7 @@ async def parse_create(channel, author, args):
 
     msg = await channel.send(embed=embed)
 
-    #await msg.add_reaction('\u2705')
+    await msg.add_reaction('\u2705')
 
 
 async def parse_activity(channel, author, args):
@@ -91,6 +95,10 @@ async def parse_activity(channel, author, args):
 
     if cmd == "join":
         await parse_activity_join(channel, author, args)
+        return
+
+    if cmd == "leave":
+        await parse_activity_leave(channel, author, args)
         return
 
     await channel.send("Unknown command. Please check the syntax with the '!help activity' command.")
@@ -178,6 +186,29 @@ async def parse_activity_join(channel, author, args):
             if success:
                 embed = serverActivity.get_status_embed()
                 await channel.send("Succesfully joined activity!", embed=embed)
+                return
+            else:
+                await channel.send(error)
+                return
+    await channel.send("Cant find activity with ID: " + acitvityId)
+
+async def parse_activity_leave(channel, author, args):
+    acitvityId = args.pop(0)
+
+    if plannedRaids.get(channel.guild.id) == None:
+        await channel.send("There are no activities planned on this server yet!")
+        return
+
+    serverActivities = plannedRaids.get(channel.guild.id)
+    
+    for i in range(len(serverActivities)):
+        serverActivity = serverActivities[i]
+
+        if serverActivity.id.hex == acitvityId:
+            success, error = serverActivity.remove_player(author)
+            if success:
+                embed = serverActivity.get_status_embed()
+                await channel.send("Succesfully left activity!", embed=embed)
                 return
             else:
                 await channel.send(error)

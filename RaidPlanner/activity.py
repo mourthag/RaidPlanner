@@ -3,11 +3,11 @@ import datetime
 import uuid
 from enum import Enum
 
-def createRaid(name, date):
-    return activity(name, date, 6, activityType.raid)
+def createRaid(name, date, owner):
+    return activity(name, date, 6, activityType.raid, owner)
 
-def createNightfall(name, date):
-    return activity(name, date, 3, activityType.nightfall)
+def createNightfall(name, date, owner):
+    return activity(name, date, 3, activityType.nightfall, owner)
 
 class activityType(Enum):
 
@@ -24,27 +24,39 @@ class activity(object):
 
 
     """
-    __slots__ = ('name', 'date', 'numPlayers', 'members', 'type', 'id')
+    __slots__ = ('name', 'date', 'numPlayers', 'members', 'type', 'id', 'owner')
 
-    def __init__(self, name, date, numPlayers, type):
+    def __init__(self, name, date, numPlayers, type, owner):
         self.name = name
         self.date = date
         self.numPlayers = numPlayers
         self.type = type
         self.members = []
         self.id = uuid.uuid1()
+        self.owner = owner
 
     def add_player(self, member):
 
         if member in self.members:
             return False, "Already in group!"
 
-
         if len(self.members) < self.numPlayers:
             self.members.append(member)
+
             return True, "Success!"
         else:
             return False, "Group already full!"
+
+    def remove_player(self, member):
+        if member == self.owner:
+            return False, "The owner can't leave the group. Transfer ownage first with '!activity ownage' or cancel the activity with '!activity cancel'."
+        if member in self.members:
+            self.members.remove(member)
+            return True, "Success!"
+        else:
+            return False, "User: " + member.display_name + " did not join the group yet."
+
+
 
     def get_status_embed(self):
 
@@ -55,7 +67,7 @@ class activity(object):
             if i < len(self.members):
                 memberList += "**" + self.members[i].display_name + "**"
             else:
-                memberList += "*still open*"
+                memberList += "*open spot*"
             memberList += "\n"
 
         embed = discord.Embed(title=self.name)
