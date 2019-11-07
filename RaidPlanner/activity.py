@@ -1,21 +1,30 @@
 import discord
 import datetime
+import uuid
 from enum import Enum
 
 def createRaid(name, date):
     return activity(name, date, 6, activityType.raid)
 
+def createNightfall(name, date):
+    return activity(name, date, 3, activityType.nightfall)
+
 class activityType(Enum):
 
-    raid="Raid"
-    nightfall="Nightfall"
+    raid="raid"
+    nightfall="nightfall"
 
     def __str__(self):
         return self.value
 
+
 class activity(object):
-    
-    __slots__ = ('name', 'date', 'numPlayers', 'members', 'type')
+    """
+    Instances of an activity represent a planned activity with a unique id, planned date, members and the type of the activity.
+
+
+    """
+    __slots__ = ('name', 'date', 'numPlayers', 'members', 'type', 'id')
 
     def __init__(self, name, date, numPlayers, type):
         self.name = name
@@ -23,15 +32,21 @@ class activity(object):
         self.numPlayers = numPlayers
         self.type = type
         self.members = []
+        self.id = uuid.uuid1()
 
     def add_player(self, member):
+
+        if member in self.members:
+            return False, "Already in group!"
+
+
         if len(self.members) < self.numPlayers:
             self.members.append(member)
-            return True, "Success"
+            return True, "Success!"
         else:
-            return False, "Group already full"
+            return False, "Group already full!"
 
-    def print_status(self):
+    def get_status_embed(self):
 
         memberList = ""
 
@@ -45,7 +60,8 @@ class activity(object):
 
         embed = discord.Embed(title=self.name)
         embed.add_field(name="Planned date:", value=self.date.ctime(), inline=False)
-        embed.add_field(name="Members:", value=memberList, inline=False)
+        embed.add_field(name="Members: (" + str(len(self.members)) + "/" + str(self.numPlayers) + ")", value=memberList, inline=False)
+        embed.add_field(name="ID: ", value=str(self.id.hex))
 
         return embed
 
