@@ -54,7 +54,7 @@ async def parse_create(channel, author, args):
     title = author.display_name + "'s " + name + " " + str(type)
     if type == activity.activityType.raid:
         newActivity = activity.createRaid(title, date)    
-    if type == activity.activityType.nightfall:
+    elif type == activity.activityType.nightfall:
         newActivity = activity.createNightfall(title, date)
     else:
         await channel.send("Unknown activity type. Please check the syntax with the '!help create' command.")
@@ -93,6 +93,7 @@ async def parse_activity(channel, author, args):
         await parse_activity_join(channel, author, args)
         return
 
+    await channel.send("Unknown command. Please check the syntax with the '!help activity' command.")
 
 async def parse_activity_list(channel, author, args):
     if plannedRaids.get(channel.guild.id) == None:
