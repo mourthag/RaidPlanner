@@ -7,6 +7,9 @@ import random
 
 client = discord.Client()
 
+reminderUpdateTimedelta = datetime.timedelta(seconds=60)
+cleanupUpdateTimedelta = datetime.timedelta(seconds=60)
+
 plannedActivities = {}
 
 commandExamples = ("!create raid today 8pm", "!activity list raid", "!activity leave", "!activity join", "!activity server", "!activity server nightfall")
@@ -27,7 +30,7 @@ async def reminder_loop():
                 now = datetime.datetime.now()
                 timedelta = datetime.timedelta(minutes=30)
 
-                if now + timedelta > serverActivity.get_date():
+                if now + timedelta > serverActivity.get_date() and now + timedelta - reminderUpdateTimedelta < serverActivity.get_date():
 
                     embed = serverActivity.get_status_embed()
                     msgText = "Heads up: You have an activity scheduled starting within the next 30 minutes."
@@ -38,8 +41,29 @@ async def reminder_loop():
                             channel = await member.create_dm()
                         await channel.send(msgText, embed=embed)
 
-        await asyncio.sleep(60)
+        await asyncio.sleep(reminderUpdateTimedelta.seconds)
 
+async def cleanup_loop():
+
+
+    while True:
+        activitiesToRemove = []
+        
+        for guild in plannedActivities:
+            serverActivities = plannedActivities.get(guild)
+            for serverActivity in serverActivities:
+
+                now = datetime.datetime.now()
+                timedelta = datetime.timedelta(hours=1)
+
+                if now - timedelta > serverActivity.get_date():
+                    activitiesToRemove.append(serverActivity)
+        
+        for activ in activitiesToRemove:
+            for guild in plannedActivities:
+                plannedActivities.get(guild).remove(activ)
+
+        await asyncio.sleep(cleanupUpdateTimedelta.seconds)
 
 @client.event
 async def on_ready():
@@ -50,6 +74,7 @@ async def on_ready():
 
     client.loop.create_task(status_loop())
     client.loop.create_task(reminder_loop())
+    client.loop.create_task(cleanup_loop())
     
 @client.event
 async def on_message(message):
