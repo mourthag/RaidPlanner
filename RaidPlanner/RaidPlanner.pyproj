@@ -22,6 +22,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="activity.py" />
+    <Compile Include="ActivityCommand.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="parsingutil.py">
       <SubType>Code</SubType>
     </Compile>
