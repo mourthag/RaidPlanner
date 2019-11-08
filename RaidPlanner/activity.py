@@ -56,7 +56,11 @@ class activity(object):
         else:
             return False, "User: " + member.display_name + " did not join the group yet."
 
+    def get_members(self):
+        return self.members
 
+    def get_date(self):
+        return self.date
 
     def get_status_embed(self):
 

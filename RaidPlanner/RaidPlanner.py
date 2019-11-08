@@ -3,10 +3,43 @@ import asyncio
 import datetime
 import activity
 import parsingutil
+import random
 
 client = discord.Client()
 
-plannedRaids = {}
+plannedActivities = {}
+
+commandExamples = ("!create raid today 8pm", "!activity list raid", "!activity leave", "!activity join", "!activity server", "!activity server nightfall")
+
+async def status_loop():
+    while True:
+        statusGame = discord.Game(random.choice(commandExamples))
+        await client.change_presence(status=discord.Status.online, activity=statusGame)
+        await asyncio.sleep(10)
+
+async def reminder_loop():
+    while True:
+
+        for guild in plannedActivities:
+            serverActivities = plannedActivities.get(guild)
+            for serverActivity in serverActivities:
+
+                now = datetime.datetime.now()
+                timedelta = datetime.timedelta(minutes=30)
+
+                if now + timedelta > serverActivity.get_date():
+
+                    embed = serverActivity.get_status_embed()
+                    msgText = "Heads up: You have an activity scheduled starting within the next 30 minutes."
+
+                    for member in serverActivity.get_members():
+                        channel = member.dm_channel
+                        if channel == None:
+                            channel = await member.create_dm()
+                        await channel.send(msgText, embed=embed)
+
+        await asyncio.sleep(60)
+
 
 @client.event
 async def on_ready():
@@ -14,8 +47,9 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
 
-    statusGame = discord.Game("!create raid today 8pm")
-    await client.change_presence(status=discord.Status.online, activity=statusGame)
+
+    client.loop.create_task(status_loop())
+    client.loop.create_task(reminder_loop())
     
 @client.event
 async def on_message(message):
@@ -69,17 +103,17 @@ async def parse_create(channel, author, args):
         print(error)
         return
 
-    plannedGuildRaids = plannedRaids.get(channel.guild.id)
+    plannedGuildRaids = plannedActivities.get(channel.guild.id)
     if plannedGuildRaids == None:
-        plannedRaids[channel.guild.id] = [newActivity]
+        plannedActivities[channel.guild.id] = [newActivity]
     else:
-        plannedRaids[channel.guild.id].append(newActivity)
+        plannedActivities[channel.guild.id].append(newActivity)
 
     embed = newActivity.get_status_embed()
 
     msg = await channel.send(embed=embed)
 
-    await msg.add_reaction('\u2705')
+    #await msg.add_reaction('\u2705')
 
 
 async def parse_activity(channel, author, args):
@@ -104,10 +138,10 @@ async def parse_activity(channel, author, args):
     await channel.send("Unknown command. Please check the syntax with the '!help activity' command.")
 
 async def parse_activity_list(channel, author, args):
-    if plannedRaids.get(channel.guild.id) == None:
+    if plannedActivities.get(channel.guild.id) == None:
         await channel.send("There are no raids planned on this server yet!")
         return
-    userActivities = filter(lambda x: author in x.members, plannedRaids.get(channel.guild.id))
+    userActivities = filter(lambda x: author in x.members, plannedActivities.get(channel.guild.id))
 
     if len(args) > 1:
         await channel.send("Invalid number of arguments. Use command '!help activity' to get more information about the command syntax.")
@@ -136,10 +170,10 @@ async def parse_activity_list(channel, author, args):
 
 
 async def parse_activity_server(channel, args):
-    if plannedRaids.get(channel.guild.id) == None:
+    if plannedActivities.get(channel.guild.id) == None:
         await channel.send("There are no activities planned on this server yet!")
         return
-    activities = plannedRaids.get(channel.guild.id)
+    serverActivities = plannedActivities.get(channel.guild.id)
     
     hasEntries = False
     if len(args) > 1:
@@ -150,12 +184,12 @@ async def parse_activity_server(channel, args):
     else:
         activityType = None
 
-    for i in range(len(activities)):
+    for serverActivity in serverActivities:
 
-        if activityType != None and activities[i].type != activityType:
+        if activityType != None and serverActivity.type != activityType:
             continue
 
-        embed = activities[i].get_status_embed()
+        embed = serverActivity.get_status_embed()
         msg = await channel.send(embed=embed)
         hasEntries = True
 
@@ -172,14 +206,13 @@ async def parse_activity_server(channel, args):
 async def parse_activity_join(channel, author, args):
     acitvityId = args.pop(0)
 
-    if plannedRaids.get(channel.guild.id) == None:
+    if plannedActivities.get(channel.guild.id) == None:
         await channel.send("There are no activities planned on this server yet!")
         return
 
-    serverActivities = plannedRaids.get(channel.guild.id)
+    serverActivities = plannedActivities.get(channel.guild.id)
     
-    for i in range(len(serverActivities)):
-        serverActivity = serverActivities[i]
+    for serverActivity in serverActivities:
 
         if serverActivity.id.hex == acitvityId:
             success, error = serverActivity.add_player(author)
@@ -195,14 +228,13 @@ async def parse_activity_join(channel, author, args):
 async def parse_activity_leave(channel, author, args):
     acitvityId = args.pop(0)
 
-    if plannedRaids.get(channel.guild.id) == None:
+    if plannedActivities.get(channel.guild.id) == None:
         await channel.send("There are no activities planned on this server yet!")
         return
 
-    serverActivities = plannedRaids.get(channel.guild.id)
+    serverActivities = plannedActivities.get(channel.guild.id)
     
-    for i in range(len(serverActivities)):
-        serverActivity = serverActivities[i]
+    for serverActivity in serverActivities:
 
         if serverActivity.id.hex == acitvityId:
             success, error = serverActivity.remove_player(author)
