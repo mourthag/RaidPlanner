@@ -65,7 +65,7 @@ class activity(object):
         for i in range(self.numPlayers):
             memberList += str(i+1) + ". "
             if i < len(self.members):
-                memberList += "**" + self.members[i].display_name + "**"
+                memberList += "<@" + str(self.members[i].id) + ">"
             else:
                 memberList += "*open spot*"
             memberList += "\n"
