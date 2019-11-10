@@ -109,7 +109,12 @@ class activity(object):
                 memberList += "*open spot*"
             memberList += "\n"
 
-        embed = discord.Embed(title=self.name)
+        if self.date > datetime.datetime.now():
+            color = discord.colour.Color.green()
+        else:
+            color = discord.colour.Color.red()
+
+        embed = discord.Embed(title=self.name, color=color)
         embed.add_field(name="Planned date:", value=self.date.ctime(), inline=False)
         embed.add_field(name="Members: (" + str(len(self.members)) + "/" + str(self.numPlayers) + ")", value=memberList, inline=False)
         embed.add_field(name="ID: ", value=str(self.id.hex))
