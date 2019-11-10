@@ -2,12 +2,24 @@ import discord
 import datetime
 import uuid
 from enum import Enum
+import simplejson
 
 def createRaid(name, date, owner):
     return activity(name, date, 6, activityType.raid, owner)
 
 def createNightfall(name, date, owner):
     return activity(name, date, 3, activityType.nightfall, owner)
+
+def from_json(json):
+
+    date = datetime.datetime.strptime(json['date'], "%Y-%m-%d %H:%M:%S")
+
+    parsedActivity = activity(json['name'], date, json['numPlayers'], json['type'], json['owner'], json['id'])
+
+    for member in json['members']:
+        parsedActivity.add_player(member)
+
+    return parsedActivity
 
 class activityType(Enum):
 
@@ -26,14 +38,37 @@ class activity(object):
     """
     __slots__ = ('name', 'date', 'numPlayers', 'members', 'type', 'id', 'owner')
 
-    def __init__(self, name, date, numPlayers, type, owner):
+    def __init__(self, name, date, numPlayers, type, owner, id=None):
         self.name = name
         self.date = date
         self.numPlayers = numPlayers
         self.type = type
         self.members = []
-        self.id = uuid.uuid1()
+        if id == None:
+            self.id = uuid.uuid1()
+        else:
+            self.id = uuid.UUID(id)
         self.owner = owner
+
+    def __serialize_members__(self):
+        result = {}
+        for i in range(len(self.members)):
+            result[str(i)] = self.members[i].id
+        return result
+
+    def __json__(self):
+        test = {
+            'id' : self.id.hex,
+            'name': self.name,
+            'date' : self.date.strftime("%Y-%m-%d %H:%M:%S"),
+            'type' : str(self.type),
+            'owner' : self.owner.id,
+            'numPlayers' : self.numPlayers,
+            'members' : self.__serialize_members__(),
+            }
+        return test
+
+    for_json = __json__
 
     def add_player(self, member):
 

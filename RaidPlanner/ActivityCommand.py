@@ -3,9 +3,69 @@ import asyncio
 import parsingutil
 import datetime
 import activity
-
+import simplejson
+import os
 
 plannedActivities = {}
+
+
+def try_load_file(file, client, additive=False):
+    if os.path.isfile(file) == False:
+        print("Can't find log at: " + file)
+        return
+
+    with open(file, 'r') as json_file:
+        data = simplejson.load(json_file)
+
+        for guildId in data['guilds']:
+            guild = discord.utils.find(lambda g: g.id == int(guildId), client.guilds)
+
+            if guild == None:
+                print("Can't find guild ID:" + guildId)
+                continue
+
+            activitiesData = data['guilds'][guildId]
+
+            parsedActivities = []
+
+            for activityData in activitiesData:
+
+                parsedActivityData = activityData
+
+                parsedOwner = discord.utils.find(lambda m: m.id == activityData['owner'], guild.members)
+                if parsedOwner == None:
+                    print("Can't find member ID: " + activityData['owner'])
+                    continue
+                parsedActivityData['owner'] = parsedOwner
+
+                parsedMembers = []
+                for memberId in activityData['members']:
+                    parsedMember = discord.utils.find(lambda m: m.id == activityData['members'][memberId], guild.members)
+                    if parsedMember == None:
+                        print("Can't find member ID: " + memberId)
+                        continue
+                    parsedMembers.append(parsedMember)
+                parsedActivityData['members'] = parsedMembers
+            
+                parsedActivity = activity.from_json(parsedActivityData)
+                parsedActivities.append(parsedActivity)
+
+
+            plannedGuildActivities = plannedActivities.get(id)
+
+            if plannedGuildActivities == None or additive == False:
+                plannedActivities[int(guildId)] = parsedActivities
+            else:
+                plannedActivities[int(guildId)].append(parsedActivities)
+
+def save_activities(file):
+
+    data = {}
+    data['guilds'] = plannedActivities
+    json_string = simplejson.dumps(data, separators=(',', ':'), indent=4, for_json=True)
+
+    with open(file, 'w+') as json_file:
+        json_file.write(json_string)
 
 async def parse_activity(channel, author, args):
     cmd = args.pop(0)
@@ -76,6 +136,8 @@ async def parse_activity_create(channel, author, args):
         plannedActivities[channel.guild.id] = [newActivity]
     else:
         plannedActivities[channel.guild.id].append(newActivity)
+
+    save_activities("ActivityBackup.txt")
 
     embed = newActivity.get_status_embed()
 

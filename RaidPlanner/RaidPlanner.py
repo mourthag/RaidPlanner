@@ -24,6 +24,7 @@ async def status_loop():
         await client.change_presence(status=discord.Status.online, activity=statusGame)
         await asyncio.sleep(10)
 
+
 async def reminder_loop():
     while True:
         now = datetime.datetime.now()
@@ -50,9 +51,8 @@ async def reminder_loop():
 
         await asyncio.sleep(reminderUpdateTimedelta.seconds)
 
+
 async def cleanup_loop():
-
-
     while True:
         activitiesToRemove = []
         now = datetime.datetime.now()
@@ -72,13 +72,17 @@ async def cleanup_loop():
             for guild in ActivityCommand.plannedActivities:
                 ActivityCommand.plannedActivities.get(guild).remove(activ)
 
+        ActivityCommand.save_activities('ActivityBackup.txt')
         await asyncio.sleep(cleanupUpdateTimedelta.seconds)
+
 
 @client.event
 async def on_ready():
     print("Eingelogt als")
     print(client.user.name)
     print(client.user.id)
+
+    ActivityCommand.try_load_file('ActivityBackup.txt', client)
 
     client.loop.create_task(status_loop())
     client.loop.create_task(reminder_loop())
