@@ -89,6 +89,10 @@ async def parse_activity(channel, author, args):
     if cmd == "leave":
         await parse_activity_leave(channel, author, args)
         return
+    
+    if cmd == "cancel":
+        await parse_activity_cancel(channel, author, args)
+        return
 
     await channel.send("Unknown command. Please check the syntax with the '!help activity' command.")
 
@@ -144,6 +148,7 @@ async def parse_activity_create(channel, author, args):
     msg = await channel.send( "<@" + str(author.id) + "> created an activity. You can join by typing '!activity join " + str(newActivity.id.hex) + "'.", embed=embed)
 
     #await msg.add_reaction('\u2705')
+
 
 async def parse_activity_list(channel, author, args):
     if plannedActivities.get(channel.guild.id) == None:
@@ -251,5 +256,27 @@ async def parse_activity_leave(channel, author, args):
                 return
             else:
                 await channel.send(error)
+                return
+    await channel.send("Cant find activity with ID: " + acitvityId)
+
+async def parse_activity_cancel(channel, author, args):
+    acitvityId = args.pop(0)
+
+    if plannedActivities.get(channel.guild.id) == None:
+        await channel.send("There are no activities planned on this server yet!")
+        return
+
+    serverActivities = plannedActivities.get(channel.guild.id)
+    
+    for i in range(len(serverActivities)):
+        serverActivity = serverActivities[i]
+        if serverActivity.id.hex == acitvityId:
+            if serverActivity.owner == author:
+                del plannedActivities[channel.guild.id][i]
+                save_activities("ActivityBackup.txt")
+                await channel.send("Cancelled activity: " + acitvityId)
+                return
+            else:
+                await channel.send("Only the activity owner can cancel an activity!")
                 return
     await channel.send("Cant find activity with ID: " + acitvityId)
