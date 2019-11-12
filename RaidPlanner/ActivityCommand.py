@@ -74,6 +74,10 @@ async def parse_activity(channel, author, args):
         await parse_activity_create(channel, author, args)
         return
 
+    if cmd == "reschedule":
+        await parse_activity_reschedule(channel, author, args)
+        return
+
     if cmd == "list":
         await parse_activity_list(channel, author, args)
         return
@@ -148,6 +152,37 @@ async def parse_activity_create(channel, author, args):
     msg = await channel.send( "<@" + str(author.id) + "> created an activity. You can join by typing '!activity join " + str(newActivity.id.hex) + "'.", embed=embed)
 
     #await msg.add_reaction('\u2705')
+
+async def parse_activity_reschedule(channel, author, args):
+    acitvityId = args.pop(0)
+
+    #parse date and time
+    try:
+        date = parsingutil.parse_date(args.pop(0))
+        time = parsingutil.parse_time(args.pop(0))
+        date = date.replace(hour=time.hour, minute=time.minute, second=time.second)
+    except ValueError:
+        await channel.send("Invalid date or time. Please enter valid values.")
+        return
+
+    if plannedActivities.get(channel.guild.id) == None:
+        await channel.send("There are no activities planned on this server yet!")
+        return
+
+    serverActivities = plannedActivities.get(channel.guild.id)
+    
+    for serverActivity in serverActivities:
+
+        if serverActivity.id.hex == acitvityId:
+            if serverActivity.owner == author:
+                serverActivity.date = date
+                embed = serverActivity.get_status_embed()
+                await channel.send("Succesfully rescheduled activity!", embed=embed)
+                return
+            else:
+                await channel.send("Only the activity owner can reschedule the activity.")
+                return
+    await channel.send("Cant find activity with ID: " + acitvityId)
 
 
 async def parse_activity_list(channel, author, args):
