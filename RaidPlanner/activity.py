@@ -10,6 +10,15 @@ def createRaid(name, date, owner):
 def createNightfall(name, date, owner):
     return activity(name, date, 3, activityType.nightfall, owner)
 
+def createMenagerie(name, date, owner):
+    return activity(name, date, 3, activityType.menagerie, owner)
+
+def createDungeon(name, date, owner):
+    return activity(name, date, 3, activityType.dungeon, owner)
+
+def createCustom(name, date, owner, numPlayers):
+    return activity(name, date, numPlayers, activityType.custom, owner)
+
 def from_json(json):
 
     date = datetime.datetime.strptime(json['date'], "%Y-%m-%d %H:%M:%S")
@@ -25,6 +34,9 @@ class activityType(Enum):
 
     raid="raid"
     nightfall="nightfall"
+    menagerie="menagerie"
+    dungeon="dungeon"
+    custom="custom"
 
     def __str__(self):
         return self.value

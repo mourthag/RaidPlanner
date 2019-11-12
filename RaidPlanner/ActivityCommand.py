@@ -106,30 +106,44 @@ async def parse_activity_create(channel, author, args):
     if len(args) < 3:
         await channel.send("Invalid number of arguments. Use command '!help activity' to get more information about the command syntax.")
         return
+    
+    #parse type
+    type = activity.activityType(args.pop(0))
 
     #parse date and time
     try:
-        date = parsingutil.parse_date(args[1])
-        time = parsingutil.parse_time(args[2])
+        date = parsingutil.parse_date(args.pop(0))
+        time = parsingutil.parse_time(args.pop(0))
         date = date.replace(hour=time.hour, minute=time.minute, second=time.second)
     except ValueError:
         await channel.send("Invalid date or time. Please enter valid values.")
         return
 
-    if len(args) > 3:
-        name = ' '.join(args[3:])
+    if type == activity.activityType.custom:
+        numPlayers = int(args.pop(0))
+
+
+    if len(args) > 0:
+        name = ' '.join(args[0:])
     else:
         name = ""
+
         
+    if type == activity.activityType.custom:        
+        title = author.display_name + "'s " + name
+    else:
+        title = author.display_name + "'s " + name + " " + str(type)
 
-    #parse type
-    type = activity.activityType(args.pop(0))
-
-    title = author.display_name + "'s " + name + " " + str(type)
     if type == activity.activityType.raid:
         newActivity = activity.createRaid(title, date, author)    
     elif type == activity.activityType.nightfall:
-        newActivity = activity.createNightfall(title, date, author)
+        newActivity = activity.createNightfall(title, date, author)    
+    elif type == activity.activityType.menagerie:
+        newActivity = activity.createMenagerie(title, date, author)
+    elif type == activity.activityType.dungeon:
+        newActivity = activity.createDungeon(title, date, author)
+    elif type == activity.activityType.custom:
+        newActivity = activity.createCustom(title, date, author, numPlayers)
     else:
         await channel.send("Unknown activity type. Please check the syntax with the '!help create' command.")
     
