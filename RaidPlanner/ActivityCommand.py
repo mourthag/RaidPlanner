@@ -141,7 +141,7 @@ async def parse_activity_create(channel, author, args):
 
     embed = newActivity.get_status_embed()
 
-    msg = await channel.send(embed=embed)
+    msg = await channel.send( "<@" + str(author.id) + "> created an activity. You can join by typing '!activity join " + str(newActivity.id.hex) + "'.", embed=embed)
 
     #await msg.add_reaction('\u2705')
 

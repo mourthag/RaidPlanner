@@ -42,7 +42,7 @@ async def reminder_loop():
                         timedelta = defaultRemindingTimedelta
 
                     if now + timedelta > serverActivity.get_date() and now + timedelta - reminderUpdateTimedelta < serverActivity.get_date():
-                        msgText = "Heads up: You have an activity scheduled starting within the next " + str(timedelta.seconds / 60) + " minutes."                    
+                        msgText = "Heads up: You have an activity scheduled starting within the next " + str(timedelta.seconds // 60) + " minutes."                    
                         channel = member.dm_channel
                         if channel == None:
                             channel = await member.create_dm()
