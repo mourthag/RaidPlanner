@@ -34,6 +34,7 @@ async def reminder_loop():
             for serverActivity in serverActivities:
 
                 embed = serverActivity.get_status_embed()
+                activityDate = serverActivity.get_date()
 
                 for member in serverActivity.get_members():
                     
@@ -41,7 +42,7 @@ async def reminder_loop():
                     if timedelta == None:
                         timedelta = defaultRemindingTimedelta
 
-                    if now + timedelta > serverActivity.get_date() and now + timedelta - reminderUpdateTimedelta < serverActivity.get_date():
+                    if now + timedelta > activityDate and now + timedelta - reminderUpdateTimedelta < activityDate:
                         msgText = "Heads up: You have an activity scheduled starting within the next " + str(timedelta.seconds // 60) + " minutes."                    
                         channel = member.dm_channel
                         if channel == None:
@@ -98,6 +99,13 @@ async def on_message(message):
 
     if cmd == "!activity":
         await ActivityCommand.parse_activity(channel, author, args)
+
+
+@client.event
+async def on_reaction_add(reaction, author):
+
+    if client.user != author and reaction.message.author == client.user:
+        await ActivityCommand.parse_reaction(reaction, author)
 
 
 client.run("NjQxNzc2MzYwMzg5NjA3NDMz.XcQFHQ.59BuUJztCiQ8-tVfbQAL8i2RKTM")

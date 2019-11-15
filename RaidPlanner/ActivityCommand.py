@@ -8,6 +8,7 @@ import os
 
 plannedActivities = {}
 
+joinEmoji = '\u2705'
 
 def try_load_file(file, client, additive=False):
     if os.path.isfile(file) == False:
@@ -66,6 +67,55 @@ def save_activities(file):
 
     with open(file, 'w+') as json_file:
         json_file.write(json_string)
+
+def find_activity_by_id(activityId, guildId=None):
+
+    if guildId == None:
+        for availableGuildId in plannedActivities:
+            guildActivities = plannedActivities[availableGuildId]
+
+            foundActivity = discord.utils.find(lambda a: str(a.id.hex) == activityId, guildActivities)
+            if foundActivity != None:
+                return foundActivity
+        return None
+    else:
+        guildActivities = plannedActivities[guildId]
+        return discord.utils.find(lambda a: str(a.id.hex) == activityId, guildActivities)
+
+async def parse_reaction(reaction, author):
+    
+    message = reaction.message
+    embeds = message.embeds
+
+    activityId = None
+
+    for embed in embeds:
+        embedFields = embed.fields
+
+        idField = discord.utils.find(lambda e: e.name == "ID", embedFields)
+
+        if activityId != None:
+            continue
+
+        activityId = idField.value
+
+    if activityId == None:
+        return
+
+    parsedActivity = find_activity_by_id(activityId, message.channel.guild.id)
+
+    if reaction.emoji == joinEmoji:
+        success, message = parsedActivity.add_player(author)
+        authorMention = "<@" + str(author.id) + "> "
+        if success:
+            embed = parsedActivity.get_status_embed()
+            await message.channel.send(authorMention + "Succesfully joined activity!", embed=embed)
+            return
+        else:
+            await message.channel.send(authorMention + message)
+            return
+
+
 
 async def parse_activity(channel, author, args):
     cmd = args.pop(0)
@@ -165,7 +215,7 @@ async def parse_activity_create(channel, author, args):
 
     msg = await channel.send( "<@" + str(author.id) + "> created an activity. You can join by typing '!activity join " + str(newActivity.id.hex) + "'.", embed=embed)
 
-    #await msg.add_reaction('\u2705')
+    await msg.add_reaction(joinEmoji)
 
 async def parse_activity_reschedule(channel, author, args):
     acitvityId = args.pop(0)
@@ -276,13 +326,13 @@ async def parse_activity_join(channel, author, args):
     for serverActivity in serverActivities:
 
         if serverActivity.id.hex == acitvityId:
-            success, error = serverActivity.add_player(author)
+            success, message = serverActivity.add_player(author)
             if success:
                 embed = serverActivity.get_status_embed()
                 await channel.send("Succesfully joined activity!", embed=embed)
                 return
             else:
-                await channel.send(error)
+                await channel.send(message)
                 return
     await channel.send("Cant find activity with ID: " + acitvityId)
 
@@ -298,13 +348,13 @@ async def parse_activity_leave(channel, author, args):
     for serverActivity in serverActivities:
 
         if serverActivity.id.hex == acitvityId:
-            success, error = serverActivity.remove_player(author)
+            success, message = serverActivity.remove_player(author)
             if success:
                 embed = serverActivity.get_status_embed()
                 await channel.send("Succesfully left activity!", embed=embed)
                 return
             else:
-                await channel.send(error)
+                await channel.send(message)
                 return
     await channel.send("Cant find activity with ID: " + acitvityId)
 

@@ -129,7 +129,7 @@ class activity(object):
         embed = discord.Embed(title=self.name, color=color)
         embed.add_field(name="Planned date:", value=self.date.ctime(), inline=False)
         embed.add_field(name="Members: (" + str(len(self.members)) + "/" + str(self.numPlayers) + ")", value=memberList, inline=False)
-        embed.add_field(name="ID: ", value=str(self.id.hex))
+        embed.add_field(name="ID", value=str(self.id.hex))
 
         return embed
 
