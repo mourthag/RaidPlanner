@@ -105,14 +105,14 @@ async def parse_reaction(reaction, author):
     parsedActivity = find_activity_by_id(activityId, message.channel.guild.id)
 
     if reaction.emoji == joinEmoji:
-        success, message = parsedActivity.add_player(author)
+        success, error = parsedActivity.add_player(author)
         authorMention = "<@" + str(author.id) + "> "
         if success:
             embed = parsedActivity.get_status_embed()
             await message.channel.send(authorMention + "Succesfully joined activity!", embed=embed)
             return
         else:
-            await message.channel.send(authorMention + message)
+            await message.channel.send(authorMention + error)
             return
 
 
@@ -326,13 +326,14 @@ async def parse_activity_join(channel, author, args):
     for serverActivity in serverActivities:
 
         if serverActivity.id.hex == acitvityId:
-            success, message = serverActivity.add_player(author)
+            success, error = serverActivity.add_player(author)
             if success:
+                save_activities("ActivityBackup.txt")
                 embed = serverActivity.get_status_embed()
                 await channel.send("Succesfully joined activity!", embed=embed)
                 return
             else:
-                await channel.send(message)
+                await channel.send(error)
                 return
     await channel.send("Cant find activity with ID: " + acitvityId)
 
@@ -348,13 +349,14 @@ async def parse_activity_leave(channel, author, args):
     for serverActivity in serverActivities:
 
         if serverActivity.id.hex == acitvityId:
-            success, message = serverActivity.remove_player(author)
+            success, error = serverActivity.remove_player(author)
             if success:
+                save_activities("ActivityBackup.txt")
                 embed = serverActivity.get_status_embed()
                 await channel.send("Succesfully left activity!", embed=embed)
                 return
             else:
-                await channel.send(message)
+                await channel.send(error)
                 return
     await channel.send("Cant find activity with ID: " + acitvityId)
 
