@@ -104,6 +104,7 @@ async def on_message(message):
 @client.event
 async def on_reaction_add(reaction, author):
 
+    print(reaction.message.content)
     if client.user != author and reaction.message.author == client.user:
         await ActivityCommand.parse_reaction(reaction, author)
 

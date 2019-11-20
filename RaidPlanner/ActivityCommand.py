@@ -10,6 +10,12 @@ plannedActivities = {}
 
 joinEmoji = '\u2705'
 
+async def send_embed_message_with_emoji(channel, messageContent, embed):
+    msg = await channel.send(messageContent, embed=embed)
+
+    reaction = await msg.add_reaction(joinEmoji)
+    return msg, reaction
+
 def try_load_file(file, client, additive=False):
     if os.path.isfile(file) == False:
         print("Can't find log at: " + file)
@@ -109,7 +115,7 @@ async def parse_reaction(reaction, author):
         authorMention = "<@" + str(author.id) + "> "
         if success:
             embed = parsedActivity.get_status_embed()
-            await message.channel.send(authorMention + "Succesfully joined activity!", embed=embed)
+            await send_embed_message_with_emoji(message.channel, authorMention + "Succesfully joined activity!", embed)
             return
         else:
             await message.channel.send(authorMention + error)
@@ -213,9 +219,7 @@ async def parse_activity_create(channel, author, args):
 
     embed = newActivity.get_status_embed()
 
-    msg = await channel.send( "<@" + str(author.id) + "> created an activity. You can join by typing '!activity join " + str(newActivity.id.hex) + "'.", embed=embed)
-
-    await msg.add_reaction(joinEmoji)
+    await send_embed_message_with_emoji(channel, "<@" + str(author.id) + "> created an activity. You can join by typing '!activity join " + str(newActivity.id.hex) + "'.", embed)
 
 async def parse_activity_reschedule(channel, author, args):
     acitvityId = args.pop(0)
@@ -241,7 +245,7 @@ async def parse_activity_reschedule(channel, author, args):
             if serverActivity.owner == author:
                 serverActivity.date = date
                 embed = serverActivity.get_status_embed()
-                await channel.send("Succesfully rescheduled activity!", embed=embed)
+                await send_embed_message_with_emoji(channel, "Succesfully rescheduled activity!", embed)
                 return
             else:
                 await channel.send("Only the activity owner can reschedule the activity.")
@@ -270,7 +274,7 @@ async def parse_activity_list(channel, author, args):
             continue
 
         embed = userActivity.get_status_embed()
-        msg = await channel.send(embed=embed)
+        await send_embed_message_with_emoji(channel, None, embed=embed)
         hasEntries=True
     
     if hasEntries == False:
@@ -302,7 +306,7 @@ async def parse_activity_server(channel, args):
             continue
 
         embed = serverActivity.get_status_embed()
-        msg = await channel.send(embed=embed)
+        await send_embed_message_with_emoji(channel, None, embed=embed)
         hasEntries = True
 
     if hasEntries == False:        
@@ -330,7 +334,7 @@ async def parse_activity_join(channel, author, args):
             if success:
                 save_activities("ActivityBackup.txt")
                 embed = serverActivity.get_status_embed()
-                await channel.send("Succesfully joined activity!", embed=embed)
+                await send_embed_message_with_emoji(channel, "Succesfully joined activity!", embed)
                 return
             else:
                 await channel.send(error)
@@ -353,7 +357,7 @@ async def parse_activity_leave(channel, author, args):
             if success:
                 save_activities("ActivityBackup.txt")
                 embed = serverActivity.get_status_embed()
-                await channel.send("Succesfully left activity!", embed=embed)
+                await send_embed_message_with_emoji(channel, "Succesfully left activity!", embed)
                 return
             else:
                 await channel.send(error)
