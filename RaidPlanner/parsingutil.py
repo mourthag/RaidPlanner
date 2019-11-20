@@ -15,7 +15,7 @@ def parse_date(arg):
        if len(vals) == 3 and vals[2] != "":
         year = int(vals[2])
 
-       return datetime.datetime(month=int(vals[0]),day=int(vals[1]), year=year)
+       return datetime.datetime(day=int(vals[0]),month=int(vals[1]), year=year)
    else:
        return datetime.datetime.today()
 
