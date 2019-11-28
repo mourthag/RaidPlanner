@@ -16,13 +16,15 @@ userRemindSettings = {}
 defaultTimeoutTimedelta = datetime.timedelta(hours=1)
 serverTimeoutSettings = {}
 
-commandExamples = ("!create raid today 8pm", "!activity list raid", "!activity leave", "!activity join", "!activity server", "!activity server nightfall")
+commandExamples = ("!activity create raid", "!activity list raid", "!activity leave", 
+                   "!activity join", "!activity server", "!activity server nightfall", 
+                   "!activity create menagerie", "!activity cancel", "!activity reschedule")
 
 async def status_loop():
     while True:
         statusGame = discord.Game(random.choice(commandExamples))
         await client.change_presence(status=discord.Status.online, activity=statusGame)
-        await asyncio.sleep(10)
+        await asyncio.sleep(20)
 
 
 async def reminder_loop():
