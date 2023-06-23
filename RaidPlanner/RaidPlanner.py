@@ -110,4 +110,4 @@ async def on_reaction_add(reaction, author):
         await ActivityCommand.parse_reaction(reaction, author)
 
 
-client.run("NjQxNzc2MzYwMzg5NjA3NDMz.XcQFHQ.59BuUJztCiQ8-tVfbQAL8i2RKTM")
+client.run("-----TOKEN------")
